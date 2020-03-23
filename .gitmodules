@@ -1,3 +1,4 @@
 [submodule "core/src/main/golang/clash"]
 	path = core/src/main/golang/clash
 	url = https://github.com/goomadao/Clash
+	branch = android
