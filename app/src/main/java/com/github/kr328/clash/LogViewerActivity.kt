@@ -10,8 +10,8 @@ import androidx.core.net.toFile
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.github.kr328.clash.adapter.LiveLogAdapter
 import com.github.kr328.clash.adapter.LogAdapter
+import com.github.kr328.clash.common.utils.intent
 import com.github.kr328.clash.core.event.LogEvent
-import com.github.kr328.clash.service.util.intent
 import kotlinx.android.synthetic.main.activity_log_viewer.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -63,9 +63,6 @@ class LogViewerActivity : BaseActivity() {
         }
     }
 
-    override val activityLabel: CharSequence
-        get() = getText(R.string.log_viewer)
-
     override fun onStart() {
         super.onStart()
 
@@ -105,7 +102,7 @@ class LogViewerActivity : BaseActivity() {
                         .map { LogEvent(LogEvent.Level.valueOf(it[1]), it[2], it[0].toLong()) }
                         .toList()
                 } catch (e: Exception) {
-                    makeSnackbarException(getString(R.string.open_log_failure), e.message)
+                    showSnackbarException(getString(R.string.open_log_failure), e.message)
 
                     throw CancellationException()
                 }

@@ -1,13 +1,23 @@
 package com.github.kr328.clash.service
 
-import android.app.Service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import com.github.kr328.clash.core.Clash
+import com.github.kr328.clash.service.clash.ClashRuntime
+import com.github.kr328.clash.service.clash.module.CloseModule
+import com.github.kr328.clash.service.clash.module.DynamicNotificationModule
+import com.github.kr328.clash.service.clash.module.ReloadModule
+import com.github.kr328.clash.service.clash.module.StaticNotificationModule
+import com.github.kr328.clash.service.settings.ServiceSettings
+import com.github.kr328.clash.service.util.broadcastClashStarted
+import com.github.kr328.clash.service.util.broadcastClashStopped
+import com.github.kr328.clash.service.util.broadcastProfileLoaded
+import kotlinx.coroutines.launch
 
-class ClashService : Service() {
-    private var clashCore: ClashCore? = null
+class ClashService : BaseService() {
+    private val service = this
+    private val runtime = ClashRuntime(this)
+    private var reason: String? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -15,11 +25,46 @@ class ClashService : Service() {
         if (ServiceStatusProvider.serviceRunning)
             return stopSelf()
 
-        Clash.initialize(this)
+        ServiceStatusProvider.serviceRunning = true
 
-        clashCore = ClashCore(this)
+        StaticNotificationModule.createNotificationChannel(service)
+        StaticNotificationModule.notifyLoadingNotification(service)
 
-        clashCore?.start()
+        launch {
+            val settings = ServiceSettings(service)
+
+            runtime.install(ReloadModule(service)) {
+                onLoaded {
+                    if (it != null) {
+                        reason = it.message
+
+                        stopSelf()
+                    } else {
+                        service.broadcastProfileLoaded()
+                    }
+                }
+            }
+            runtime.install(CloseModule()) {
+                onClosed {
+                    reason = null
+
+                    stopSelf()
+                }
+            }
+
+            if (settings.get(ServiceSettings.NOTIFICATION_REFRESH))
+                runtime.install(DynamicNotificationModule(service))
+            else
+                runtime.install(StaticNotificationModule(service))
+
+            runtime.exec()
+        }
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        this.broadcastClashStarted()
+
+        return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -27,6 +72,10 @@ class ClashService : Service() {
     }
 
     override fun onDestroy() {
-        clashCore?.destroy()
+        ServiceStatusProvider.serviceRunning = false
+
+        service.broadcastClashStopped(reason)
+
+        super.onDestroy()
     }
 }
