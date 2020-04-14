@@ -45,3 +45,6 @@ google-services.json
 
 # Dolphin
 .directory
+
+# macOS file
+.DS_Store
