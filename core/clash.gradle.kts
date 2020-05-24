@@ -4,7 +4,7 @@ import java.util.*
 import java.net.*
 
 object Constants {
-    const val GEOIP_DATABASE_URL = "https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb"
+    const val GEOIP_DATABASE_URL = "https://cdn.jsdelivr.net/gh/alecthw/mmdb_china_ip_list@release/Country.mmdb"
     const val GEOIP_INVALID_INTERVAL = 1000L * 60 * 60 * 24 * 7
 
     const val SOURCE_PATH = "src/main/golang"
