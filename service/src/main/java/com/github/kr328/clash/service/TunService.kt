@@ -19,7 +19,6 @@ class TunService : VpnService(), CoroutineScope by MainScope() {
         private const val PRIVATE_VLAN4_CLIENT = "172.31.255.253"
         private const val PRIVATE_VLAN4_MIRROR = "172.31.255.254"
         private const val PRIVATE_VLAN_DNS = "198.18.0.1"
-        private const val VLAN_ANY = "0.0.0.0/0"
     }
 
     private val service = this
@@ -96,6 +95,8 @@ class TunService : VpnService(), CoroutineScope by MainScope() {
     }
 
     override fun onDestroy() {
+        TunModule.requestStop()
+
         ServiceStatusProvider.serviceRunning = false
 
         service.broadcastClashStopped(reason)
@@ -119,7 +120,7 @@ class TunService : VpnService(), CoroutineScope by MainScope() {
                 return if (settings.get(ServiceSettings.BYPASS_PRIVATE_NETWORK))
                     resources.getStringArray(R.array.bypass_private_route).toList()
                 else
-                    listOf(VLAN_ANY)
+                    resources.getStringArray(R.array.bypass_local_route).toList()
             }
         override val dnsAddress: String
             get() = PRIVATE_VLAN_DNS
@@ -139,7 +140,7 @@ class TunService : VpnService(), CoroutineScope by MainScope() {
             }
 
         override fun onCreateTunFailure() {
-            stopSelfForReason("Start VPN rejected by the system")
+            stopSelfForReason("Establish VPN rejected by system")
         }
     }
 

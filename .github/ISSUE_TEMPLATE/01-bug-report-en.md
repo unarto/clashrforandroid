@@ -7,6 +7,10 @@ assignees: ''
 
 ---
 
+<!-- Be sure to put a clear title after [BUG] in the text box above -->
+<!-- Be sure to put a clear title after [BUG] in the text box above -->
+<!-- Be sure to put a clear title after [BUG] in the text box above -->
+
 **Describe the bug**
 A clear and concise description of what the bug is.
 
@@ -23,15 +27,12 @@ A clear and concise description of what you expected to happen.
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
-**Logs**
-if applicable, add logs to help detect problem
-
 **Device Info (please complete the following information):**
 
  - Device: [e.g. Pixel 4]
  - ROM: [e.g: AOSP]
  - ROM Version:
- - Android Version [e.g. Oreo]
+ - Android Version [e.g. 10]
 
 **Application Info (please complete the following information):**
 
@@ -41,3 +42,16 @@ if applicable, add logs to help detect problem
 
 **Additional context**
 Add any other context about the problem here.
+
+**Configure**
+If applicable, paste **removed server info** configure
+```yaml
+# paste here
+```
+
+**Logs**
+If applicable, paste logs to help detect problem
+
+```
+<paste here>
+```

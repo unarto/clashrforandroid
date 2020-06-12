@@ -24,7 +24,7 @@ const (
 var adapter *tun2socket.Tun2Socket
 var mutex sync.Mutex
 
-func StartTunDevice(fd, mtu int, gateway, mirror, dnsAddress string) error {
+func StartTunDevice(fd, mtu int, gateway, mirror, dnsAddress string, onStop func()) error {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -36,6 +36,7 @@ func StartTunDevice(fd, mtu int, gateway, mirror, dnsAddress string) error {
 	}
 
 	gatewayIP, gatewayNet, err := net.ParseCIDR(gateway)
+	_, ipv4Loopback, _ := net.ParseCIDR("127.0.0.0/8")
 	mirrorIP := net.ParseIP(mirror)
 
 	if err != nil || mirrorIP == nil || !gatewayNet.Contains(mirrorIP) {
@@ -54,11 +55,15 @@ func StartTunDevice(fd, mtu int, gateway, mirror, dnsAddress string) error {
 	file := os.NewFile(uintptr(fd), "/dev/tun")
 	_ = syscall.SetNonblock(fd, true)
 
+	increaseMaxConnection()
+
 	adapter = tun2socket.NewTun2Socket(file, mtu, gatewayIP, mirrorIP.To4())
 
 	adapter.SetLogger(&ClashLogger{})
 	adapter.SetClosedHandler(func() {
 		StopTunDevice()
+
+		onStop()
 	})
 	adapter.SetAllocator(func(length int) []byte {
 		if length <= maxUdpPacketSize {
@@ -67,7 +72,8 @@ func StartTunDevice(fd, mtu int, gateway, mirror, dnsAddress string) error {
 		return make([]byte, length)
 	})
 	adapter.SetTCPHandler(func(conn net.Conn, endpoint *binding.Endpoint) {
-		if gatewayNet.Contains(endpoint.Target.IP) {
+		if gatewayNet.Contains(endpoint.Target.IP) || ipv4Loopback.Contains(endpoint.Target.IP) {
+			_ = conn.Close()
 			return
 		}
 
@@ -81,10 +87,10 @@ func StartTunDevice(fd, mtu int, gateway, mirror, dnsAddress string) error {
 			Zone: "",
 		})
 
-		tunnel.Add(adapters.NewSocket(addr, conn, C.SOCKS, C.TCP))
+		tunnel.Add(adapters.NewSocket(addr, conn, C.SOCKS))
 	})
 	adapter.SetUDPHandler(func(payload []byte, endpoint *binding.Endpoint, sender redirect.UDPSender) {
-		if gatewayNet.Contains(endpoint.Target.IP) {
+		if gatewayNet.Contains(endpoint.Target.IP) || ipv4Loopback.Contains(endpoint.Target.IP) {
 			udpRecycle(payload)
 			return
 		}
@@ -128,4 +134,24 @@ func StopTunDevice() {
 
 		log.Infoln("Android tun stopped")
 	}
+}
+
+func increaseMaxConnection() {
+	var limit syscall.Rlimit
+
+	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
+		return
+	}
+
+	if limit.Max == limit.Cur {
+		return
+	}
+
+	limit.Cur = limit.Max
+
+	if err := syscall.Setrlimit(syscall.RLIMIT_NOFILE, &limit); err != nil {
+		return
+	}
+
+	log.Infoln("Increase max connection to %d", limit.Cur)
 }
