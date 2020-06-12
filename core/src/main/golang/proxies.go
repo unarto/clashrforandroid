@@ -1,20 +1,21 @@
 package main
 
 import (
+	"strings"
+	"unsafe"
+
 	"github.com/Dreamacro/clash/adapters/outbound"
 	"github.com/Dreamacro/clash/adapters/outboundgroup"
 	"github.com/Dreamacro/clash/constant"
 	"github.com/Dreamacro/clash/log"
 	"github.com/Dreamacro/clash/tunnel"
-	"strings"
-	"unsafe"
 )
 
 /*
 #cgo CFLAGS: -Werror
 #include "buffer.h"
 #include "proxies.h"
- */
+*/
 import "C"
 
 //export setSelector
@@ -128,8 +129,6 @@ func queryProxyGroups() *C.proxy_group_list_t {
 	return result
 }
 
-
-
 func typeToProxyTypeC(t constant.AdapterType) C.proxy_type_t {
 	switch t {
 	case constant.Direct:
@@ -139,6 +138,8 @@ func typeToProxyTypeC(t constant.AdapterType) C.proxy_type_t {
 
 	case constant.Shadowsocks:
 		return C.Shadowsocks
+	case constant.ShadowsocksR:
+		return C.ShadowsocksR
 	case constant.Snell:
 		return C.Snell
 	case constant.Socks5:
@@ -167,7 +168,7 @@ func typeToProxyTypeC(t constant.AdapterType) C.proxy_type_t {
 }
 
 func allocCProxyGroup(proxiesSize int) *C.proxy_group_t {
-	result := (*C.proxy_group_t)(C.malloc(C.sizeof_proxy_group_t + C.sizeof_proxy_t * C.size_t(proxiesSize)))
+	result := (*C.proxy_group_t)(C.malloc(C.sizeof_proxy_group_t + C.sizeof_proxy_t*C.size_t(proxiesSize)))
 
 	result.proxies_size = C.int(proxiesSize)
 
@@ -175,7 +176,7 @@ func allocCProxyGroup(proxiesSize int) *C.proxy_group_t {
 }
 
 func allocCProxyGroupList(groupSize int) *C.proxy_group_list_t {
-	result := (*C.proxy_group_list_t)(C.malloc(C.sizeof_proxy_group_list_t + C.sizeof_long * C.size_t(groupSize)))
+	result := (*C.proxy_group_list_t)(C.malloc(C.sizeof_proxy_group_list_t + C.sizeof_long*C.size_t(groupSize)))
 
 	result.size = C.int(groupSize)
 
@@ -186,7 +187,7 @@ func allocCProxyGroupList(groupSize int) *C.proxy_group_list_t {
 func setCProxyGroupListElement(list *C.proxy_group_list_t, index int, element *C.proxy_group_t) {
 	address := uintptr(unsafe.Pointer(list))
 
-	offset := address + uintptr(C.sizeof_proxy_group_list_t) + uintptr(index) * uintptr(C.sizeof_long)
+	offset := address + uintptr(C.sizeof_proxy_group_list_t) + uintptr(index)*uintptr(C.sizeof_long)
 
 	*(**C.proxy_group_t)(unsafe.Pointer(offset)) = element
 }
@@ -195,7 +196,7 @@ func setCProxyGroupListElement(list *C.proxy_group_list_t, index int, element *C
 func indexCProxyGroupElement(group *C.proxy_group_t, index int) *C.proxy_t {
 	address := uintptr(unsafe.Pointer(group))
 
-	offset := address + uintptr(C.sizeof_proxy_group_t) + uintptr(index) * uintptr(C.sizeof_proxy_t)
+	offset := address + uintptr(C.sizeof_proxy_group_t) + uintptr(index)*uintptr(C.sizeof_proxy_t)
 
 	return (*C.proxy_t)(unsafe.Pointer(offset))
 }
