@@ -57,8 +57,8 @@ Master::Master(JavaVM *vm, JNIEnv *env) : vm(vm) {
   sDirect = g<jstring>(env, env->NewStringUTF("Direct"));
   sReject = g<jstring>(env, env->NewStringUTF("Reject"));
   sShadowsocks = g<jstring>(env, env->NewStringUTF("Shadowsocks"));
-  sShadowsocksR = g<jstring>(env, env->NewStringUTF("ShadowsocksR")) sSnell =
-      g<jstring>(env, env->NewStringUTF("Snell"));
+  sShadowsocksR = g<jstring>(env, env->NewStringUTF("ShadowsocksR"));
+  sSnell = g<jstring>(env, env->NewStringUTF("Snell"));
   sSocks5 = g<jstring>(env, env->NewStringUTF("Socks5"));
   sHttp = g<jstring>(env, env->NewStringUTF("Http"));
   sVmess = g<jstring>(env, env->NewStringUTF("Vmess"));
