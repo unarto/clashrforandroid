@@ -4,7 +4,7 @@ import java.util.*
 import java.net.*
 import java.time.*
 
-val gMinSdkVersion: Int by rootProject.extra
+val gMinSdkVersion: String by project
 
 val geoipDatabaseUrl = "https://github.com/Dreamacro/maxmind-geoip/releases/latest/download/Country.mmdb"
 val geoipInvalidate = Duration.ofDays(7)
@@ -12,6 +12,14 @@ val geoipOutput = buildDir.resolve("outputs/geoip")
 val golangSource = file("src/main/golang")
 val golangOutput = buildDir.resolve("outputs/golang")
 val nativeAbis = listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+
+val String.exe: String
+    get() {
+        return if ( Os.isFamily(Os.FAMILY_WINDOWS) )
+            "$this.exe"
+        else
+            this
+    }
 
 fun generateGolangBuildEnvironment(abi: String): Map<String, String> {
     val properties = Properties().apply {
@@ -33,43 +41,45 @@ fun generateGolangBuildEnvironment(abi: String): Map<String, String> {
             throw GradleScriptException("Unsupported host", FileNotFoundException("Unsupported host"))
     }
 
+    val minSdkVersion = gMinSdkVersion.removePrefix("android-")
+
     val compilerBase = rootProject.file(ndk).resolve("toolchains/llvm/prebuilt/$host-x86_64/bin")
 
     val cCompiler = when(abi) {
         "armeabi-v7a" ->
-            "armv7a-$host-androideabi$gMinSdkVersion-clang"
+            "armv7a-linux-androideabi$minSdkVersion-clang"
         "arm64-v8a" ->
-            "aarch64-$host-android$gMinSdkVersion-clang"
+            "aarch64-linux-android$minSdkVersion-clang"
         "x86" ->
-            "i686-$host-android$gMinSdkVersion-clang"
+            "i686-linux-android$minSdkVersion-clang"
         "x86_64" ->
-            "x86_64-$host-android$gMinSdkVersion-clang"
+            "x86_64-linux-android$minSdkVersion-clang"
         else ->
             throw GradleScriptException("Unsupported abi $abi", FileNotFoundException("Unsupported abi $abi"))
     }
 
     val cppCompiler = when(abi) {
         "armeabi-v7a" ->
-            "armv7a-$host-androideabi$gMinSdkVersion-clang++"
+            "armv7a-linux-androideabi$minSdkVersion-clang++"
         "arm64-v8a" ->
-            "aarch64-$host-android$gMinSdkVersion-clang++"
+            "aarch64-linux-android$minSdkVersion-clang++"
         "x86" ->
-            "i686-$host-android$gMinSdkVersion-clang++"
+            "i686-linux-android$minSdkVersion-clang++"
         "x86_64" ->
-            "x86_64-$host-android$gMinSdkVersion-clang++"
+            "x86_64-linux-android$minSdkVersion-clang++"
         else ->
             throw GradleScriptException("Unsupported abi $abi", FileNotFoundException("Unsupported abi $abi"))
     }
 
     val linker =  when(abi) {
         "armeabi-v7a" ->
-            "arm-$host-androideabi-ld"
+            "arm-linux-androideabi-ld"
         "arm64-v8a" ->
-            "aarch64-$host-android-ld"
+            "aarch64-linux-android-ld"
         "x86" ->
-            "i686-$host-android-ld"
+            "i686-linux-android-ld"
         "x86_64" ->
-            "x86_64-$host-android-ld"
+            "x86_64-linux-android-ld"
         else ->
             throw GradleScriptException("Unsupported abi $abi", FileNotFoundException("Unsupported abi $abi"))
     }
@@ -88,9 +98,9 @@ fun generateGolangBuildEnvironment(abi: String): Map<String, String> {
     }
 
     return mapOf(
-        "CC" to compilerBase.resolve(cCompiler).absolutePath,
-        "CXX" to compilerBase.resolve(cppCompiler).absolutePath,
-        "LD" to compilerBase.resolve(linker).absolutePath,
+        "CC" to compilerBase.resolve(cCompiler.exe).absolutePath,
+        "CXX" to compilerBase.resolve(cppCompiler.exe).absolutePath,
+        "LD" to compilerBase.resolve(linker.exe).absolutePath,
         "GOOS" to "android",
         "GOARCH" to golangArch,
         "CGO_ENABLED" to "1",
