@@ -3,8 +3,6 @@ package main
 import (
 	"unsafe"
 
-	"unsafe"
-
 	"github.com/Dreamacro/clash/adapters/outbound"
 	"github.com/Dreamacro/clash/adapters/outboundgroup"
 	"github.com/Dreamacro/clash/constant"
