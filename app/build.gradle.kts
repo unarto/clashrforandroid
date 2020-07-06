@@ -71,7 +71,7 @@ android {
             }
         }
         signingConfigs {
-            named("release") {
+            register("release") {
                 storeFile = rootProject.file(Objects.requireNonNull(properties.getProperty("storeFile")))
                 storePassword = Objects.requireNonNull(properties.getProperty("storePassword"))
                 keyAlias = Objects.requireNonNull(properties.getProperty("keyAlias"))
